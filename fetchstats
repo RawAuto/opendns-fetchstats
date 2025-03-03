@@ -77,26 +77,26 @@ fi
 GO="yes"
 PAGE=1
 while [ "yes" == "$GO" ] ; do
-	CSV=`curl --silent --insecure \
+	RAW=`curl --silent --insecure \
 		--cookie "$COOKIEJAR" \
 		"$CSVURL/stats/$NETWORK_ID/topdomains/$DATE/page$PAGE.csv" \
 	`
 	if [ "$PAGE" == "1" ]; then
-		if [ "$CSV" == "" ]; then
+		if [ "$RAW" == "" ]; then
 			echo "You can not access $NETWORK_ID" >&2
 			exit 2
 		fi
-		HEADING=`echo "$CSV" | head -n 1`
+		HEADING=`echo "$RAW" | head -n 1`
 		if [[ "$HEADING" == *DOCTYPE* ]]; then
 		    echo "Error retrieving data.  Date range may be outside of available data." >&2
 	        exit 2
 		fi
 	else
-		CSV=`echo "$CSV" | tail -n +2`
+		RAW=`echo "$RAW" | tail -n +2`
 	fi
 
-	if [ -z "$CSV" ] ; then GO="no"
-	else echo "$CSV" ; fi
+	if [ -z "$RAW" ] ; then GO="no"
+	else echo "$RAW" ; fi
 	PAGE=$(($PAGE + 1))
 done
 
