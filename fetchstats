@@ -6,11 +6,11 @@
 # Richard Crowley <richard@opendns.com>
 #
 
-CSVURL="https://dashboard.opendns.com"
+RAWDATAURL="https://dashboard.opendns.com"
 LOGINURL="https://login.opendns.com/?source=dashboard"
 
 usage() {
-	echo "Usage: $0 <username> <network_id> <YYYY-MM-DD> [<YYYY-MM-DD>]" >&2
+	echo "Usage: $0 <username> <network_id> <YYYY-MM-DD> [<YYYY-MM-DD>] <output_file>" >&2
 	exit 1
 }
 
@@ -32,10 +32,18 @@ if [ -z "$NETWORK_ID" ] ; then usage ; fi
 date_check "$3"
 if [ -z "$4" ] ; then
 	DATE="$3"
+	OUTPUT_FILE="$5"
 else
 	date_check "$4"
 	DATE="$3to$4"
+	OUTPUT_FILE="$5"
 fi
+
+if [ -z "$OUTPUT_FILE" ] ; then usage ; fi
+
+# Clear the output file at the start
+> "$OUTPUT_FILE"
+echo "Output will also be saved to $OUTPUT_FILE"
 
 echo -n "Password for $USERNAME: " >&2
 stty -echo
@@ -77,28 +85,36 @@ fi
 GO="yes"
 PAGE=1
 while [ "yes" == "$GO" ] ; do
-	CSV=`curl --silent --insecure \
+	echo "Fetching page $PAGE..."
+
+	RAW=`curl --silent --insecure \
 		--cookie "$COOKIEJAR" \
-		"$CSVURL/stats/$NETWORK_ID/topdomains/$DATE/page$PAGE.csv" \
+		"$RAWDATAURL/stats/$NETWORK_ID/topdomains/$DATE/page$PAGE.csv" \
 	`
+	
 	if [ "$PAGE" == "1" ]; then
-		if [ "$CSV" == "" ]; then
+		if [ "$RAW" == "" ]; then
 			echo "You can not access $NETWORK_ID" >&2
 			exit 2
 		fi
-		HEADING=`echo "$CSV" | head -n 1`
+		HEADING=`echo "$RAW" | head -n 1`
 		if [[ "$HEADING" == *DOCTYPE* ]]; then
-		    echo "Error retrieving data.  Date range may be outside of available data." >&2
+		    echo "Error retrieving data. Date range may be outside of available data." >&2
 	        exit 2
 		fi
 	else
-		CSV=`echo "$CSV" | tail -n +2`
+		RAW=`echo "$RAW" | tail -n +2`
 	fi
 
-	if [ -z "$CSV" ] ; then GO="no"
-	else echo "$CSV" ; fi
+	if [ -z "$RAW" ] ; then 
+		echo "No more data at page $PAGE."
+		GO="no"
+	else 
+		echo "$RAW" >> "$OUTPUT_FILE"
+	fi
+
 	PAGE=$(($PAGE + 1))
 done
 
+echo "Finished fetching all pages."
 rm -f "$COOKIEJAR"
-
