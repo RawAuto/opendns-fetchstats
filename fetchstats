@@ -55,19 +55,22 @@ FORMTOKEN=`curl --silent --insecure \
 	| grep -m 1 formtoken \
 	| sed 's/^.*name="formtoken" value="\([0-9a-f]*\)".*$/\1/' \
 `
+echo "Form token: $FORMTOKEN"
 
-# Sign into OpenDNS
-SIGNIN=`curl --silent --insecure \
-	--cookie "$COOKIEJAR" \
-	--cookie-jar "$COOKIEJAR" \
-	--data "formtoken=$FORMTOKEN&username=$USERNAME&password=$PASSWORD&sign_in_submit=foo" \
-	"$LOGINURL" \
-	| grep "Logging you in"
-`
+# Sign into OpenDNS and follow the redirect
+LOGIN_RESPONSE=$(curl --silent --insecure -L \
+    --cookie "$COOKIEJAR" \
+    --cookie-jar "$COOKIEJAR" \
+    --data "formtoken=$FORMTOKEN&username=$USERNAME&password=$PASSWORD&sign_in_submit=foo" \
+    "$LOGINURL"
+)
 
-if [ "$SIGNIN" == "" ]; then
-	echo "Login failed.  Check username and password." >&2
-	exit 2
+# Check if we're successfully redirected to the dashboard
+if echo "$LOGIN_RESPONSE" | grep -q "dashboard"; then
+    echo "Login successful!"
+else
+    echo "Login failed. Check username and password." >&2
+    exit 2
 fi
 
 # Fetch pages of Top Domains

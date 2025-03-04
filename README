@@ -14,7 +14,15 @@ INSTALLATION
 	it on your PATH somewhere.  Your curl program must be on your
 	PATH, as well.
 
+USAGE
+	Simplified usage for Windows environments, using Git For Windows
+		Install Git for Windows
+		Open Git Bash in directory containing script
+		usage:
+			fetchstats <username> <network_id> <YYYY-MM-DD> [<YYYY-MM-DD>]
+
 DEPENDENCIES
+	Git for Windows <https://gitforwindows.org/>
 	BASH <http://www.gnu.org/software/bash/>
 	cURL <http://curl.haxx.se/>
 
@@ -24,6 +32,7 @@ VERSION
 AUTHOR
 	Richard Crowley <richard@opendns.com>
 	Brian Hartvigsen <brian.hartvigsen@opendns.com>
+	Ellie Raw <ellie@rawautomation.com>
 
 LICENSE
 	This work is licensed under a Creative Commons
